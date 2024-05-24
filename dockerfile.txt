@@ -1,7 +1,0 @@
-FROM nginx:alpine
-COPY . /usr/share/nginx/html
-
-WORKDIR /the/workdir/path
-
-RUN npm install
-EXPOSE 8007
