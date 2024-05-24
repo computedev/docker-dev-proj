@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  database:
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+  web:
+    image: nginx:latest
+    ports:
+      - "8085:80"
+volumes:
+  db_data: {}
