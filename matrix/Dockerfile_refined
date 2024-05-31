@@ -1,0 +1,12 @@
+FROM alpine
+WORKDIR /cmatrix/
+RUN apk update && \
+apk add autoconf automake alpine-sdk ncurses-dev ncurses-static && \
+apk add git && \ 
+git clone https://github.com/spurin/cmatrix.git . && \
+autoreconf -i && \
+mkdir -p /usr/lib/kbd/consolefonts /usr/share/consolefonts && \
+./configure LDFLAGS="-static" && \
+make
+
+CMD ["./cmatrix"]
