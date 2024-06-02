@@ -1,5 +1,5 @@
 # art-docker-mastery-from-captain
-Tutorial on Udemy - Docker Mastery: with Kubernetes +Swarm from a Docker Captain - from Bret Fisher
+Credits: Docker Mastery: with Kubernetes +Swarm from a Docker Captain - from Bret Fisher
 
 ####  Section 2: The Best Way to Setup Docker for Your OS
 
