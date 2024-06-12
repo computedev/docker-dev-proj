@@ -262,7 +262,169 @@ kubectl config set-context --current --namespace=default
 ```
 - now by default the pods created will be created in mynamspace 
 
+#### Deployment
 
- 
+```bash 
+kubectl create deployment nginx --image=nginx --dry-run=client -o yaml | tee nginx-deployment.yaml | kubectl apply -f -
+```
+- The kubectl command's output is first sent to both a file and the terminal via tee
+This output, appearing on the terminal (stdout), then acts as input (stdin) for the following command, as we're using a pipe
+Finally, we use a dash with kubectl to specify that it should read this input from stdin.
 
+
+```bash
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx
+    type:webserver
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources: {}
+status: {}
+
+```
+
+
+```bash
+kubectl get deployment
+
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   1/1     1            1           4m53s
+
+#More information
+
+kubectl get deployment/nginx -o yaml
+
+```
+
+```bash
+kubectl get replicaset
+NAME               DESIRED   CURRENT   READY   AGE
+nginx-7854ff8877   1         1         1       5m1s
+nginx-54658f9cf8   3         3         3       4m
+nginx-b9b667b8b    0         0         0       23m
+```
+#### Roll Out Status
+```bash
+kubectl rollout status deployment/nginx
+-------------------------------------------
+deployment "nginx" successfully rolled out
+-------------------------------------------
+
+kubectl apply -f nginx-deployment.yaml && kubectl rollout status deployment/nginx
+--------------------------------------------------------------------------
+Waiting for deployment "nginx" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "nginx" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "nginx" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "nginx" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "nginx" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "nginx" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "nginx" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "nginx" rollout to finish: 1 old replicas are pending termination...
+deployment "nginx" successfully rolled out
+---------------------------------------------------------------------------
+```
+
+#### Deployments have a history, lets check the initial rollout history
+
+```bash
+kubectl rollout history deployment/nginx
+
+deployment.apps/nginx 
+REVISION  CHANGE-CAUSE
+1         <none>
+
+```
+- At the moment there is only 3 section in our history, we can annote this to make use of this record -
+```bash
+kubectl annotate deployment/nginx kubernetes.io/change-cause="Initial deployment"
+
+deployment.apps/nginx 
+REVISION  CHANGE-CAUSE
+1         initial deployment
+2         second  stable  deployment
+3         Third  alpine  deployment
+```
+ scale the number of replicas, we will run a watch command straight after to see this as it progresses.
+>> press ctrl-c to exit 
+
+```bash
+
+kubectl scale deployment/nginx --replicas=10; watch kubectl get pods -o wide
+```
+
+
+
+- We can change the file with increased or decrecased numbe of pods and then deploy pod
+
+```bash
+kubectl apply -f nginx-deployment.yaml && kubectl rollout status deployment/nginx
+```
+#### Desribe 
+
+- We can check the history of deployment and also you will now see references to the new and old replicaSets and much more
+```bash
+kubectl describe deployment/nginx
+
+ Type    Reason             Age                From                   Message
+  ----    ------             ----               ----                   -------
+  Normal  ScalingReplicaSet  58m                deployment-controller  Scaled up replica set nginx-7854ff8877 to 1
+  Normal  ScalingReplicaSet  55m                deployment-controller  Scaled up replica set nginx-7854ff8877 to 2 from 1
+  Normal  ScalingReplicaSet  53m                deployment-controller  Scaled up replica set nginx-7854ff8877 to 3 from 2
+  Normal  ScalingReplicaSet  39m                deployment-controller  Scaled up replica set nginx-7854ff8877 to 4 from 3
+  Normal  ScalingReplicaSet  27m                deployment-controller  Scaled up replica set nginx-b9b667b8b to 1
+  Normal  ScalingReplicaSet  27m                deployment-controller  Scaled down replica set nginx-7854ff8877 to 3 from 4
+  Normal  ScalingReplicaSet  27m                deployment-controller  Scaled up replica set nginx-b9b667b8b to 2 from 1
+  Normal  ScalingReplicaSet  26m                deployment-controller  Scaled down replica set nginx-7854ff8877 to 2 from 3
+  Normal  ScalingReplicaSet  26m                deployment-controller  Scaled up replica set nginx-b9b667b8b to 3 from 2
+  Normal  ScalingReplicaSet  26m                deployment-controller  Scaled down replica set nginx-7854ff8877 to 1 from 2
+  Normal  ScalingReplicaSet  46s (x4 over 51s)  deployment-controller  (combined from similar events): Scaled down replica set nginx-54658f9cf8 to 0 from 1
+```
+- Roll out to specific version 
+```bash
+kubectl rollout undo deployment/nginx --to-revision=1 && kubectl rollout status deployment/nginx
+```
+
+```bash
+deployment.apps/nginx rolled back
+deployment "nginx" successfully rolled out
+
+kubectl rollout history deployment/nginx
+REVISION  CHANGE-CAUSE
+1         initial deployment
+2         second  stable  deployment
+3         Third  alpine  deployment
+5         change image to nginx:apples - failed
+6         Fourth  perl  deployment
+```
+
+
+```bash
+kubectl get replicaset -o wide
+
+NAME               DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES          SELECTOR
+nginx-7854ff8877   0         0         0       64m     nginx        nginx           app=nginx,pod-template-hash=7854ff8877
+nginx-b9b667b8b    0         0         0       33m     nginx        nginx:stable    app=nginx,pod-template-hash=b9b667b8b
+nginx-54658f9cf8   0         0         0       13m     nginx        nginx:alpine    app=nginx,pod-template-hash=54658f9cf8
+nginx-6bc7ff9956   3         3         3       6m59s   nginx        nginx:perl      app=nginx,pod-template-hash=6bc7ff9956
+nginx-78bcb9d677   0         0         0       3m52s   nginx        nginx:bananas   app=nginx,pod-template-hash=78bcb9d677
+```
 
