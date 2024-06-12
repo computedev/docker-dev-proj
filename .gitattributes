@@ -1,4 +1,5 @@
 *.JavaScript linguist-detectable=false
+*.CMake linguist-detectable=false
 
 *.yml linguist-detectable=true
 *.yml linguist-language=YAML
