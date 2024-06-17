@@ -263,7 +263,9 @@ kubectl config set-context --current --namespace=default
 ```
 - now by default the pods created will be created in mynamspace 
 
-## Deployment
+# Deployment and Replica sets
+
+### Deployment
 
 ```bash 
 kubectl create deployment nginx --image=nginx --dry-run=client -o yaml | tee nginx-deployment.yaml | kubectl apply -f -
@@ -359,22 +361,25 @@ REVISION  CHANGE-CAUSE
 1         <none>
 ------------------------------------------
 ```
+##### Annotation
 - At the moment there is only 3 section in our history, we can annote this to make use of this record -
-```bash
-kubectl annotate deployment/nginx kubernetes.io/change-cause="Initial deployment"
+#```bash
+<pre lang=bash>
+<B>kubectl annotate deployment/nginx kubernetes.io/change-cause="Initial deployment"</b>
 --------------------------------------------------------------------------------------
 deployment.apps/nginx 
 REVISION  CHANGE-CAUSE
 1         initial deployment
 2         second  stable  deployment
 3         Third  alpine  deployment
-```
+</pre>
  scale the number of replicas, we will run a watch command straight after to see this as it progresses.
 >> press ctrl-c to exit 
 
 ```bash
 
-kubectl scale deployment/nginx --replicas=10; watch kubectl get pods -o wide
+**kubectl scale deployment/nginx --replicas=10; watch kubectl get pods -o wide**
+
 ```
 
 
@@ -407,7 +412,7 @@ kubectl describe deployment/nginx
 ```
 ---
 
-- Roll out to specific version 
+##### Roll out to specific version 
 ```bash
 kubectl rollout undo deployment/nginx --to-revision=1 && kubectl rollout status deployment/nginx
 ```
@@ -439,4 +444,6 @@ nginx-78bcb9d677   0         0         0       3m52s   nginx        nginx:banana
 ---------------------------------------------------------------------------------------------
 ```
 ---
+
+
 
